@@ -1,0 +1,159 @@
+
+
+
+
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Label Studio</title>
+  <meta charset="utf-8">
+  <meta name="author" content=""/>
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, shrink-to-fit=no">
+
+  <!-- Address string color -->
+  <meta name="theme-color" content="#272727"> <!-- Chrome, Firefox OS and Opera -->
+  <meta name="msapplication-navbutton-color" content="#272727">  <!-- Windows Phone -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="#272727">  <!-- iOS Safari -->
+
+  <link href="https://example.com/static/images/favicon.58c0a5114450.ico" rel="shortcut icon"/>
+  <link href="https://example.com/static/css/main.05101f5b0b98.css" rel="stylesheet"/>
+  <link href="https://example.com/react-app/main.css?v=a9766f" rel="stylesheet">
+
+  
+<link rel="stylesheet" href="https://example.com/static/css/login.8194c7aa01b8.css"/>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-129877673-1" nonce="5GBl/IF0aPx0VaPlHge7Bw=="></script>
+<script nonce="5GBl/IF0aPx0VaPlHge7Bw==">
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'UA-129877673-1');
+</script>
+
+</head>
+
+<body>
+
+<div class="login_page_new_ui">
+  <div class="left">
+    <h2>Welcome</h2>
+    <img src="https://example.com/static/images/label_studio_logo.9e8d57abe160.svg" height="93"  alt="Label Studio Logo"/>
+    <h3>A full-fledged open source solution for data labeling</h3>
+
+    
+
+<script nonce="5GBl/IF0aPx0VaPlHge7Bw==">
+  const dataTips = [
+    {
+      title: 'Did you know?',
+      description: 'You can sync data from all popular cloud storage providers to collect new items for labeling as they are uploaded, and return the annotation results to train and continuously improve models.',
+      cta: {
+        text: 'Learn more',
+        url: `https://labelstud.io/guide/storage`,
+        params: {
+          experiment: 'login_revamp',
+          treatment: 'sync_cloud_data',
+        }
+      },
+
+    }, {
+      title: 'Did you know?',
+      description: 'You can enable webhooks to trigger machine learning model training or perform active learning after a certain number of tasks have been annotated.',
+      cta: {
+        text: 'See use cases',
+        url: 'https://labelstud.io/guide/webhooks#What-to-use-Label-Studio-webhooks-for',
+        params: {
+          experiment: 'login_revamp',
+          treatment: 'enable_webhooks',
+        }
+      },
+
+    }, {
+      title: 'Did you know?',
+      description: 'You can use keyboard shortcuts, or hotkeys, to speed up labeling. Click Settings while annotating to enable predefined hotkeys or see how you can customize your own.',
+      cta: {
+        text: 'Learn more',
+        url: 'https://labelstud.io/guide/labeling.html#Use-keyboard-shortcuts',
+        params: {
+          experiment: 'login_revamp',
+          treatment: 'hotkeys',
+        }
+      },
+
+    }, {
+      title: 'Did you know?',
+      description: 'Label Studio has dozens of pre-built templates for all data types you can use to configure your labeling UI, from image classification to sentiment analysis to supervised LLM fine-tuning. ',
+      cta: {
+        text: 'See all templates',
+        url: 'https://labelstud.io/templates',
+        params: {
+          experiment: 'login_revamp',
+          treatment: 'templates',
+        }
+      },
+    }
+  ];
+
+  const SERVER_ID = "328b4b24-0a9f-4338-abf6-065fd5ed096a";
+
+  function createURL(url, params) {
+    const base = new URL(url);
+
+    Object.entries(params ?? {}).forEach(([key, value]) => {
+      base.searchParams.set(key, value);
+    });
+
+    if (SERVER_ID) base.searchParams.set("server_id", SERVER_ID);
+
+    return base.toString()
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const _title = document.querySelector('.tips .title');
+    const _description = document.querySelector('.tips .description');
+
+    const selectedTip = dataTips[Math.floor(Math.random() * dataTips.length)];
+    const ctaUrl = createURL(selectedTip.cta.url, selectedTip.cta.params)
+
+    _title.innerHTML = selectedTip.title;
+    _description.innerHTML = `${selectedTip.description} <a href="${ctaUrl}" target="_blank">${selectedTip.cta.text}</a>`;
+  });
+</script>
+
+<div class="tips">
+  <div class="title"></div>
+  <div class="description"></div>
+</div>
+
+
+    <div class="logo_humansignal">
+      Brought to you by
+      <img src="https://example.com/static/images/human_signal_logo.97adf6f9a70c.svg" height="22"  alt="Human Signal Logo"/>
+    </div>
+  </div>
+  <div class="right">
+    <div class="toggle">
+        
+        <a href="https://example.com/user/signup" class="">Sign up</a>
+        <a href="https://example.com/user/login" class="active">Log in</a>
+        
+    </div>
+    
+  <form id="login-form" action="/user/login/?next=/projects/" method="post">
+    <input type="hidden" name="csrfmiddlewaretoken" value="ynwRhcis7Cti9Bzcrpag0eJssA8Zz4RSqRp2sGzbei6CYONHfQ0vY60VdOJw3Wd0">
+    <p><input type="text" class="ls-input" name="email" id="email" placeholder="Email" value=""></p>
+    <p><input type="password" class="ls-input" name="password" id="password" placeholder="Password"></p>
+    
+    <p>
+      <input type="checkbox" id="persist_session" name="persist_session" class="ls-checkbox" checked="checked" style="width: auto;" />
+      <label for="persist_session">Keep me logged in this browser</label>
+    </p>
+    <p><button type="submit" aria-label="Log In" class="ls-button ls-button_look_primary">Log in</button></p>
+  </form>
+
+
+
+
+</body>
+</html>
+
