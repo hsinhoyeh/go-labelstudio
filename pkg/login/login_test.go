@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"testing"
 
-	lstestutil "github.com/hsinhoyeh/go-labelstudio/pkg/testutil"
+	lstestutil "github.com/hsinhoyeh/go-labelstudio/pkg/http/testutil"
 	"github.com/hsinhoyeh/go-labelstudio/testdata"
 	"github.com/stretchr/testify/assert"
 )
