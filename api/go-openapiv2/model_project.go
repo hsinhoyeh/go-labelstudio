@@ -46,7 +46,7 @@ type Project struct {
 	// Minimum number of completed tasks after which model training is started
 	MinAnnotationsToStartTraining int32 `json:"min_annotations_to_start_training,omitempty"`
 	// Start model training after any annotations are submitted or updated
-	StartTrainingOnAnnotationUpdate string `json:"start_training_on_annotation_update,omitempty"`
+	StartTrainingOnAnnotationUpdate bool `json:"start_training_on_annotation_update,omitempty"`
 	// If set, the annotator can view model predictions
 	ShowCollabPredictions bool `json:"show_collab_predictions,omitempty"`
 	// Tasks with annotations count
@@ -74,18 +74,18 @@ type Project struct {
 	// Dict of weights for each control tag in metric calculation. Each control tag (e.g. label or choice) will have it's own key in control weight dict with weight for each label and overall weight.For example, if bounding box annotation with control tag named my_bbox should be included with 0.33 weight in agreement calculation, and the first label Car should be twice more important than Airplaine, then you have to need the specify: {'my_bbox': {'type': 'RectangleLabels', 'labels': {'Car': 1.0, 'Airplaine': 0.5}, 'overall': 0.33}
 	ControlWeights interface{} `json:"control_weights,omitempty"`
 	// JSON-formatted labeling configuration
-	ParsedLabelConfig string `json:"parsed_label_config,omitempty"`
+	ParsedLabelConfig interface{} `json:"parsed_label_config,omitempty"`
 	// Retrieve and display predictions when loading a task
 	EvaluatePredictionsAutomatically bool `json:"evaluate_predictions_automatically,omitempty"`
 	// Flag to detect is project ready for labeling
-	ConfigHasControlTags string `json:"config_has_control_tags,omitempty"`
-	SkipQueue            string `json:"skip_queue,omitempty"`
+	ConfigHasControlTags interface{} `json:"config_has_control_tags,omitempty"`
+	SkipQueue            string      `json:"skip_queue,omitempty"`
 	// Reveal pre-annotations interactively
 	RevealPreannotationsInteractively bool `json:"reveal_preannotations_interactively,omitempty"`
 	// Pinned date and time
 	PinnedAt time.Time `json:"pinned_at,omitempty"`
 	// Finished tasks
-	FinishedTaskNumber int32  `json:"finished_task_number,omitempty"`
-	QueueTotal         string `json:"queue_total,omitempty"`
-	QueueDone          string `json:"queue_done,omitempty"`
+	FinishedTaskNumber int32 `json:"finished_task_number,omitempty"`
+	QueueTotal         int32 `json:"queue_total,omitempty"`
+	QueueDone          int32 `json:"queue_done,omitempty"`
 }

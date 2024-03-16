@@ -30,7 +30,7 @@ func TestCreateProject(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
-	resp2, err := NewProjectService(c).GetProject(ctx, resp.ID)
+	resp2, err := NewProjectService(c).GetProject(ctx, resp.Id)
 	assert.NoError(t, err)
 	assert.EqualValues(t, resp2, resp)
 }

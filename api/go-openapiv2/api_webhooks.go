@@ -12,11 +12,12 @@ package swagger
 import (
 	"context"
 	"fmt"
-	"github.com/antihax/optional"
 	"io/ioutil"
 	"net/http"
-	"net/url"
+	pkgurl "net/url"
 	"strings"
+
+	"github.com/antihax/optional"
 )
 
 // Linger please
@@ -47,8 +48,8 @@ func (a *WebhooksApiService) ApiWebhooksCreate(ctx context.Context, data Webhook
 	localVarPath := a.client.cfg.BasePath + "/api/webhooks/"
 
 	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
+	localVarQueryParams := pkgurl.Values{}
+	localVarFormParams := pkgurl.Values{}
 
 	// to determine the Content-Type header
 	localVarHttpContentTypes := []string{"application/json"}
@@ -146,8 +147,8 @@ func (a *WebhooksApiService) ApiWebhooksDelete(ctx context.Context, id int32) (*
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", fmt.Sprintf("%v", id), -1)
 
 	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
+	localVarQueryParams := pkgurl.Values{}
+	localVarFormParams := pkgurl.Values{}
 
 	// to determine the Content-Type header
 	localVarHttpContentTypes := []string{"application/json"}
@@ -233,8 +234,8 @@ func (a *WebhooksApiService) ApiWebhooksInfoList(ctx context.Context, localVarOp
 	localVarPath := a.client.cfg.BasePath + "/api/webhooks/info/"
 
 	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
+	localVarQueryParams := pkgurl.Values{}
+	localVarFormParams := pkgurl.Values{}
 
 	if localVarOptionals != nil && localVarOptionals.OrganizationOnly.IsSet() {
 		localVarQueryParams.Add("organization-only", parameterToString(localVarOptionals.OrganizationOnly.Value(), ""))
@@ -324,8 +325,8 @@ func (a *WebhooksApiService) ApiWebhooksList(ctx context.Context, localVarOption
 	localVarPath := a.client.cfg.BasePath + "/api/webhooks/"
 
 	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
+	localVarQueryParams := pkgurl.Values{}
+	localVarFormParams := pkgurl.Values{}
 
 	if localVarOptionals != nil && localVarOptionals.Project.IsSet() {
 		localVarQueryParams.Add("project", parameterToString(localVarOptionals.Project.Value(), ""))
@@ -444,8 +445,8 @@ func (a *WebhooksApiService) ApiWebhooksPartialUpdate(ctx context.Context, id in
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", fmt.Sprintf("%v", id), -1)
 
 	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
+	localVarQueryParams := pkgurl.Values{}
+	localVarFormParams := pkgurl.Values{}
 	if strlen(url) < 1 {
 		return localVarReturnValue, nil, reportError("url must have at least 1 elements")
 	}
@@ -568,8 +569,8 @@ func (a *WebhooksApiService) ApiWebhooksRead(ctx context.Context, id int32) (Web
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", fmt.Sprintf("%v", id), -1)
 
 	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
+	localVarQueryParams := pkgurl.Values{}
+	localVarFormParams := pkgurl.Values{}
 
 	// to determine the Content-Type header
 	localVarHttpContentTypes := []string{"application/json"}
@@ -685,8 +686,8 @@ func (a *WebhooksApiService) ApiWebhooksUpdate(ctx context.Context, id int32, da
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", fmt.Sprintf("%v", id), -1)
 
 	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
+	localVarQueryParams := pkgurl.Values{}
+	localVarFormParams := pkgurl.Values{}
 	if strlen(url) < 1 {
 		return localVarReturnValue, nil, reportError("url must have at least 1 elements")
 	}

@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
-	"net/http"
 	"time"
 
+	lsopenapi "github.com/hsinhoyeh/go-labelstudio/api/go-openapiv2"
 	lshttp "github.com/hsinhoyeh/go-labelstudio/pkg/http"
+	user "github.com/hsinhoyeh/go-labelstudio/pkg/user"
 )
 
 func NewProjectService(client *lshttp.Client) *ProjectService {
@@ -22,35 +22,20 @@ type ProjectService struct {
 	client *lshttp.Client
 }
 
-func (p *ProjectService) CreateProject(ctx context.Context, title, description string, labelConfig LabelConfig) (*ProjectResource, error) {
-	projectUrl, err := lshttp.JoinURL(p.client.HostURL(), "/api/projects")
+func (p *ProjectService) CreateProject(ctx context.Context, title, description string, labelConfig LabelConfig) (*lsopenapi.Project, error) {
+
+	proj, _, err := p.client.OpenAPIClient().ProjectsApi.ApiProjectsCreate(
+		user.NewUserService(p.client).WithAccessToken(ctx),
+		lsopenapi.Project{
+			Title:       title,
+			Description: description,
+			LabelConfig: labelConfig.String(),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
-
-	body := &CreateProjectRequestBody{
-		Title:       title,
-		Description: description,
-		LabelConfig: labelConfig.String(),
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "POST", projectUrl, body.ToJSONReader())
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Referer", projectUrl)
-
-	rawResp, err := p.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	resp := &ProjectResource{}
-	if err := resp.Unmarshal(bytes.NewReader(rawResp)); err != nil {
-		return nil, err
-	}
-	return resp, nil
+	return &proj, nil
 }
 
 type CreateProjectRequestBody struct {
@@ -217,29 +202,13 @@ func (c *ProjectResource) Unmarshal(b io.Reader) error {
 	return json.Unmarshal(blob, c)
 }
 
-func (p *ProjectService) GetProject(ctx context.Context, pid int) (*ProjectResource, error) {
-	projectUrl, err := lshttp.JoinURL(p.client.HostURL(), fmt.Sprintf("/api/projects/%d", pid))
+func (p *ProjectService) GetProject(ctx context.Context, pid int32) (*lsopenapi.Project, error) {
+	proj, _, err := p.client.OpenAPIClient().ProjectsApi.ApiProjectsRead(
+		user.NewUserService(p.client).WithAccessToken(ctx),
+		pid,
+	)
 	if err != nil {
 		return nil, err
 	}
-
-	req, err := http.NewRequestWithContext(ctx, "GET", projectUrl, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	//req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Referer", projectUrl)
-
-	rawResp, err := p.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	resp := &ProjectResource{}
-	if err := resp.Unmarshal(bytes.NewReader(rawResp)); err != nil {
-		return nil, err
-	}
-	return resp, nil
-
+	return &proj, nil
 }
