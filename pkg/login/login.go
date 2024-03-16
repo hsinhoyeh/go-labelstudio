@@ -5,30 +5,35 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	lshttp "github.com/hsinhoyeh/go-labelstudio/pkg/http"
 )
 
-func NewLoginService(client *http.Client, hostURL string) *LoginService {
+func NewLoginService(client *lshttp.Client) *LoginService {
 	return &LoginService{
-		client:  client,
-		hostURL: hostURL, // like $LABEL_STUDIO_HOST configured in labelstudio
+		client: client,
 	}
 }
 
 type LoginService struct {
-	client  *http.Client
-	hostURL string
+	client *lshttp.Client
+}
+
+func (l *LoginService) DefaultLogin(ctx context.Context) error {
+	account := os.Getenv("LABEL_STUDIO_USERNAME")
+	password := os.Getenv("LABEL_STUDIO_PASSWORD")
+
+	return l.LogMeIn(ctx, account, password)
 }
 
 func (l *LoginService) LogMeIn(ctx context.Context, account string, password string) error {
 
-	loginUrl, err := lshttp.JoinURL(l.hostURL, "/user/login")
+	loginUrl, err := lshttp.JoinURL(l.client.HostURL(), "/user/login")
 	if err != nil {
 		return err
 	}
@@ -47,7 +52,7 @@ func (l *LoginService) LogMeIn(ctx context.Context, account string, password str
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Referer", loginUrl)
-	_, err = httpDo(l.client, req)
+	_, err = l.client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -74,7 +79,7 @@ func (l *LoginService) LogMeIn(ctx context.Context, account string, password str
 //	  </p>
 //	  <p><button type="submit" aria-label="Log In" class="ls-button ls-button_look_primary">Log in</button></p>
 //	</form>
-func retrieveCSRFToken(ctx context.Context, client *http.Client, url string) (string, error) {
+func retrieveCSRFToken(ctx context.Context, client *lshttp.Client, url string) (string, error) {
 	loginFormInBytes, err := httpGet(ctx, client, url)
 	if err != nil {
 		return "", err
@@ -83,25 +88,13 @@ func retrieveCSRFToken(ctx context.Context, client *http.Client, url string) (st
 }
 
 // httpGet sends $GET reqeust to url and return the response in raw bytes
-func httpGet(ctx context.Context, httpClient *http.Client, url string) ([]byte, error) {
+func httpGet(ctx context.Context, httpClient *lshttp.Client, url string) ([]byte, error) {
 	r, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := httpDo(httpClient, r)
+	resp, err := httpClient.Do(r)
 	return resp, err
-}
-
-func httpDo(httpClient *http.Client, req *http.Request) ([]byte, error) {
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode > 300 || resp.StatusCode < 200 {
-		return nil, fmt.Errorf("invalid resposne code :%d", resp.StatusCode)
-	}
-	defer resp.Body.Close()
-	return io.ReadAll(resp.Body)
 }
 
 func parseCSRFToken(htmlBody []byte) (string, error) {
