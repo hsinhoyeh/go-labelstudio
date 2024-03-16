@@ -1,0 +1,52 @@
+# Project
+
+## Properties
+Name | Type | Description | Notes
+------------ | ------------- | ------------- | -------------
+**Id** | **int32** |  | [optional] [default to null]
+**Title** | **string** | Project name. Must be between 3 and 50 characters long. | [optional] [default to null]
+**Description** | **string** | Project description | [optional] [default to null]
+**LabelConfig** | **string** | Label config in XML format. See more about it in documentation | [optional] [default to null]
+**ExpertInstruction** | **string** | Labeling instructions in HTML format | [optional] [default to null]
+**ShowInstruction** | **bool** | Show instructions to the annotator before they start | [optional] [default to null]
+**ShowSkipButton** | **bool** | Show a skip button in interface and allow annotators to skip the task | [optional] [default to null]
+**EnableEmptyAnnotation** | **bool** | Allow annotators to submit empty annotations | [optional] [default to null]
+**ShowAnnotationHistory** | **bool** | Show annotation history to annotator | [optional] [default to null]
+**Organization** | **int32** |  | [optional] [default to null]
+**Color** | **string** |  | [optional] [default to null]
+**MaximumAnnotations** | **int32** | Maximum number of annotations for one task. If the number of annotations per task is equal or greater to this value, the task is completed (is_labeled&#x3D;True) | [optional] [default to null]
+**IsPublished** | **bool** | Whether or not the project is published to annotators | [optional] [default to null]
+**ModelVersion** | **string** | Machine learning model version | [optional] [default to null]
+**IsDraft** | **bool** | Whether or not the project is in the middle of being created | [optional] [default to null]
+**CreatedBy** | [***UserSimple**](UserSimple.md) |  | [optional] [default to null]
+**CreatedAt** | [**time.Time**](time.Time.md) |  | [optional] [default to null]
+**MinAnnotationsToStartTraining** | **int32** | Minimum number of completed tasks after which model training is started | [optional] [default to null]
+**StartTrainingOnAnnotationUpdate** | **string** | Start model training after any annotations are submitted or updated | [optional] [default to null]
+**ShowCollabPredictions** | **bool** | If set, the annotator can view model predictions | [optional] [default to null]
+**NumTasksWithAnnotations** | **int32** | Tasks with annotations count | [optional] [default to null]
+**TaskNumber** | **int32** | Total task number in project | [optional] [default to null]
+**UsefulAnnotationNumber** | **int32** | Useful annotation number in project not including skipped_annotations_number and ground_truth_number. Total annotations &#x3D; annotation_number + skipped_annotations_number + ground_truth_number | [optional] [default to null]
+**GroundTruthNumber** | **int32** | Honeypot annotation number in project | [optional] [default to null]
+**SkippedAnnotationsNumber** | **int32** | Skipped by collaborators annotation number in project | [optional] [default to null]
+**TotalAnnotationsNumber** | **int32** | Total annotations number in project including skipped_annotations_number and ground_truth_number. | [optional] [default to null]
+**TotalPredictionsNumber** | **int32** | Total predictions number in project including skipped_annotations_number, ground_truth_number, and useful_annotation_number. | [optional] [default to null]
+**Sampling** | **string** |  | [optional] [default to null]
+**ShowGroundTruthFirst** | **bool** |  | [optional] [default to null]
+**ShowOverlapFirst** | **bool** |  | [optional] [default to null]
+**OverlapCohortPercentage** | **int32** |  | [optional] [default to null]
+**TaskDataLogin** | **string** | Task data credentials: login | [optional] [default to null]
+**TaskDataPassword** | **string** | Task data credentials: password | [optional] [default to null]
+**ControlWeights** | **interface{}** | Dict of weights for each control tag in metric calculation. Each control tag (e.g. label or choice) will have it&#39;s own key in control weight dict with weight for each label and overall weight.For example, if bounding box annotation with control tag named my_bbox should be included with 0.33 weight in agreement calculation, and the first label Car should be twice more important than Airplaine, then you have to need the specify: {&#39;my_bbox&#39;: {&#39;type&#39;: &#39;RectangleLabels&#39;, &#39;labels&#39;: {&#39;Car&#39;: 1.0, &#39;Airplaine&#39;: 0.5}, &#39;overall&#39;: 0.33} | [optional] [default to null]
+**ParsedLabelConfig** | **string** | JSON-formatted labeling configuration | [optional] [default to null]
+**EvaluatePredictionsAutomatically** | **bool** | Retrieve and display predictions when loading a task | [optional] [default to null]
+**ConfigHasControlTags** | **string** | Flag to detect is project ready for labeling | [optional] [default to null]
+**SkipQueue** | **string** |  | [optional] [default to null]
+**RevealPreannotationsInteractively** | **bool** | Reveal pre-annotations interactively | [optional] [default to null]
+**PinnedAt** | [**time.Time**](time.Time.md) | Pinned date and time | [optional] [default to null]
+**FinishedTaskNumber** | **int32** | Finished tasks | [optional] [default to null]
+**QueueTotal** | **string** |  | [optional] [default to null]
+**QueueDone** | **string** |  | [optional] [default to null]
+
+[[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
+
+

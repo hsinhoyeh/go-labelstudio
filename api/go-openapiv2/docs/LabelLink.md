@@ -1,0 +1,14 @@
+# LabelLink
+
+## Properties
+Name | Type | Description | Notes
+------------ | ------------- | ------------- | -------------
+**Id** | **int32** |  | [optional] [default to null]
+**AnnotationsCount** | **int32** |  | [optional] [default to null]
+**FromName** | **string** | Tag name | [default to null]
+**Project** | **int32** |  | [default to null]
+**Label** | **int32** |  | [default to null]
+
+[[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
+
+
