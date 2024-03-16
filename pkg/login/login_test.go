@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"os"
 	"testing"
 
-	lshttp "github.com/hsinhoyeh/go-labelstudio/pkg/http"
+	lstestutil "github.com/hsinhoyeh/go-labelstudio/pkg/testutil"
 	"github.com/hsinhoyeh/go-labelstudio/testdata"
 	"github.com/stretchr/testify/assert"
 )
@@ -22,25 +21,21 @@ func TestParseCSRFToken(t *testing.T) {
 }
 
 func TestLogin(t *testing.T) {
-	account := os.Getenv("LABEL_STUDIO_USERNAME")
-	password := os.Getenv("LABEL_STUDIO_PASSWORD")
-	hostUrl := os.Getenv("LABEL_STUDIO_HOST")
-
-	if account == "" || password == "" || hostUrl == "" {
-		t.Skip("skip this test as envs are not configured")
+	if testing.Short() {
+		t.Skip("skipping testing in short mode")
 		return
 	}
-	u, err := url.Parse(hostUrl)
+	c, err := lstestutil.NewTestClient()
 	assert.NoError(t, err)
 
-	c, err := lshttp.NewClient()
+	assert.NoError(
+		t,
+		NewLoginService(c).DefaultLogin(context.Background()),
+	)
+
+	u, err := url.Parse(c.HostURL())
 	assert.NoError(t, err)
-
-	ls := NewLoginService(c, hostUrl)
-	assert.NoError(t, ls.LogMeIn(context.Background(), account, password))
-
-	for _, cookie := range c.Jar.Cookies(u) {
+	for _, cookie := range c.Jar().Cookies(u) {
 		fmt.Printf("  %s: %s\n", cookie.Name, cookie.Value)
 	}
-
 }
