@@ -7,6 +7,8 @@ import (
 	"net/http/cookiejar"
 
 	"golang.org/x/net/publicsuffix"
+
+	lsopenapi "github.com/hsinhoyeh/go-labelstudio/api/go-openapiv2"
 )
 
 func NewClient(hostURL string) (*Client, error) {
@@ -33,6 +35,19 @@ func (c *Client) HostURL() string {
 
 func (c *Client) Jar() http.CookieJar {
 	return c.httpClient.Jar
+}
+
+func (c *Client) OpenAPIClient() *lsopenapi.APIClient {
+	apiclient := lsopenapi.NewAPIClient(
+		&lsopenapi.Configuration{
+			BasePath:   c.hostURL,
+			HTTPClient: c.httpClient,
+			DefaultHeader: map[string]string{
+				"Referer": c.hostURL,
+			},
+		},
+	)
+	return apiclient
 }
 
 func (c *Client) Do(req *http.Request) ([]byte, error) {

@@ -1,16 +1,15 @@
 package login
 
 import (
-	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	lsgoquery "github.com/hsinhoyeh/go-labelstudio/pkg/goquery"
 	lshttp "github.com/hsinhoyeh/go-labelstudio/pkg/http"
 )
 
@@ -80,37 +79,17 @@ func (l *LoginService) LogMeIn(ctx context.Context, account string, password str
 //	  <p><button type="submit" aria-label="Log In" class="ls-button ls-button_look_primary">Log in</button></p>
 //	</form>
 func retrieveCSRFToken(ctx context.Context, client *lshttp.Client, url string) (string, error) {
-	loginFormInBytes, err := httpGet(ctx, client, url)
+	val, found, err := lsgoquery.ParseHTML(ctx, client, url, csrfParser)
 	if err != nil {
 		return "", err
 	}
-	return parseCSRFToken(loginFormInBytes)
-}
-
-// httpGet sends $GET reqeust to url and return the response in raw bytes
-func httpGet(ctx context.Context, httpClient *lshttp.Client, url string) ([]byte, error) {
-	r, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := httpClient.Do(r)
-	return resp, err
-}
-
-func parseCSRFToken(htmlBody []byte) (string, error) {
-	fieldName := "csrfmiddlewaretoken"
-	return parseHttpForm(htmlBody, fieldName)
-}
-
-func parseHttpForm(htmlBody []byte, formFieldName string) (string, error) {
-	document, err := goquery.NewDocumentFromReader(bytes.NewReader(htmlBody))
-	if err != nil {
-		return "", err
-	}
-	query := fmt.Sprintf("[name=%s]", formFieldName)
-	val, exists := document.Find(query).First().Attr("value")
-	if !exists {
-		return "", errors.New("not found")
+	if !found {
+		return "", errors.New("found nothing with parser")
 	}
 	return val, nil
+}
+
+func csrfParser(doc *goquery.Document) (string, bool) {
+	query := "[name=csrfmiddlewaretoken]"
+	return doc.Find(query).First().Attr("value")
 }

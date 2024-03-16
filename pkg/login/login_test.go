@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"testing"
 
+	lsgoquery "github.com/hsinhoyeh/go-labelstudio/pkg/goquery"
 	lstestutil "github.com/hsinhoyeh/go-labelstudio/pkg/http/testutil"
 	"github.com/hsinhoyeh/go-labelstudio/testdata"
 	"github.com/stretchr/testify/assert"
@@ -15,9 +16,10 @@ func TestParseCSRFToken(t *testing.T) {
 	userLoginBytes, err := testdata.HtmlFs.ReadFile("html/userlogin.html")
 	assert.NoError(t, err)
 
-	v, err := parseCSRFToken(userLoginBytes)
+	val, found, err := lsgoquery.ParseRawHTML(userLoginBytes, csrfParser)
 	assert.NoError(t, err)
-	assert.EqualValues(t, "ynwRhcis7Cti9Bzcrpag0eJssA8Zz4RSqRp2sGzbei6CYONHfQ0vY60VdOJw3Wd0", v)
+	assert.EqualValues(t, "ynwRhcis7Cti9Bzcrpag0eJssA8Zz4RSqRp2sGzbei6CYONHfQ0vY60VdOJw3Wd0", val)
+	assert.True(t, found)
 }
 
 func TestLogin(t *testing.T) {
