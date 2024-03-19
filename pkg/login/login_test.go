@@ -49,12 +49,12 @@ func TestSignup(t *testing.T) {
 	assert.NoError(t, err)
 
 	loginService1 := NewLoginService(c1)
-	assert.NoError(t, loginService1.SignUp(ctx, "foo@example.com", "barbarbar"))
+	assert.NoError(t, loginService1.SignUp(ctx, "foo@example.com", "barbarbar", ""))
 
 	c2, err := lstestutil.NewTestClient()
 	assert.NoError(t, err)
 	loginService2 := NewLoginService(c2)
-	assert.NoError(t, loginService2.LogMeIn(ctx, "foo@example.com", "barbarbar"))
+	assert.NoError(t, loginService2.LogMeIn(ctx, "foo@example.com", "barbarbar", ""))
 
 	u, err := url.Parse(c2.HostURL())
 	assert.NoError(t, err)
