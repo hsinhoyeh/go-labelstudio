@@ -3,6 +3,7 @@ package login
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -23,10 +24,15 @@ type LoginService struct {
 	client *lshttp.Client
 }
 
-func (l *LoginService) SignUp(ctx context.Context, email, password string) error {
+// SignUp allows a new user to be registered into labelstudio
+// invitedToken is required when the public registered is diabled when LABEL_STUDIO_DISABLE_SIGNUP_WITHOUT_LINK is turned on.
+func (l *LoginService) SignUp(ctx context.Context, email, password string, invitedToken string) error {
 	signupUrl, err := lshttp.JoinURL(l.client.HostURL(), "/user/signup")
 	if err != nil {
 		return err
+	}
+	if len(invitedToken) > 0 {
+		signupUrl = fmt.Sprintf("%s/?token=%s", signupUrl, invitedToken)
 	}
 	csrfToken, err := retrieveCSRFToken(ctx, l.client, signupUrl)
 	if err != nil {
