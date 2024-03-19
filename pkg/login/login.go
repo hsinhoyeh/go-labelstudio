@@ -23,6 +23,34 @@ type LoginService struct {
 	client *lshttp.Client
 }
 
+func (l *LoginService) SignUp(ctx context.Context, email, password string) error {
+	signupUrl, err := lshttp.JoinURL(l.client.HostURL(), "/user/signup")
+	if err != nil {
+		return err
+	}
+	csrfToken, err := retrieveCSRFToken(ctx, l.client, signupUrl)
+	if err != nil {
+		return err
+	}
+
+	form := url.Values{}
+	form.Add("csrfmiddlewaretoken", csrfToken)
+	form.Add("email", email)
+	form.Add("password", password)
+	form.Add("allow_newsletters", "false")
+	req, err := http.NewRequestWithContext(ctx, "POST", signupUrl, strings.NewReader(form.Encode()))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Referer", signupUrl)
+	_, err = l.client.Do(req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (l *LoginService) DefaultLogin(ctx context.Context) error {
 	account := os.Getenv("LABEL_STUDIO_USERNAME")
 	password := os.Getenv("LABEL_STUDIO_PASSWORD")
