@@ -41,3 +41,25 @@ func TestLogin(t *testing.T) {
 		fmt.Printf("  %s: %s\n", cookie.Name, cookie.Value)
 	}
 }
+
+func TestSignup(t *testing.T) {
+	ctx := context.Background()
+
+	c1, err := lstestutil.NewTestClient()
+	assert.NoError(t, err)
+
+	loginService1 := NewLoginService(c1)
+	assert.NoError(t, loginService1.SignUp(ctx, "foo@example.com", "barbarbar"))
+
+	c2, err := lstestutil.NewTestClient()
+	assert.NoError(t, err)
+	loginService2 := NewLoginService(c2)
+	assert.NoError(t, loginService2.LogMeIn(ctx, "foo@example.com", "barbarbar"))
+
+	u, err := url.Parse(c2.HostURL())
+	assert.NoError(t, err)
+	for _, cookie := range c2.Jar().Cookies(u) {
+		fmt.Printf("  %s: %s\n", cookie.Name, cookie.Value)
+	}
+
+}
