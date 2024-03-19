@@ -5,11 +5,12 @@ import (
 	"path/filepath"
 )
 
-func JoinURL(host, subpath string) (string, error) {
+func JoinURL(host string, subpaths ...string) (string, error) {
 	u, err := url.Parse(host)
 	if err != nil {
 		return "", err
 	}
-	u.Path = filepath.Join(u.Path, subpath)
+	joinPaths := append([]string{u.Path}, subpaths...)
+	u.Path = filepath.Join(joinPaths...)
 	return u.String(), nil
 }
