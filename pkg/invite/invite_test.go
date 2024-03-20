@@ -16,7 +16,8 @@ func TestGetInvitationToken(t *testing.T) {
 	assert.NoError(t, err)
 
 	ctx := context.Background()
-	assert.NoError(t, login.NewLoginService(c).DefaultLogin(ctx))
+	_, err = login.NewLoginService(c).DefaultLogin(ctx)
+	assert.NoError(t, err)
 
 	inviteService := NewInviteService(c)
 	token, err := inviteService.GetInvitationToken(ctx)

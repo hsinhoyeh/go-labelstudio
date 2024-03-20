@@ -2,12 +2,11 @@ package login
 
 import (
 	"context"
-	"fmt"
-	"net/url"
 	"testing"
 
 	lsgoquery "github.com/hsinhoyeh/go-labelstudio/pkg/goquery"
 	lstestutil "github.com/hsinhoyeh/go-labelstudio/pkg/http/testutil"
+	"github.com/hsinhoyeh/go-labelstudio/pkg/invite"
 	"github.com/hsinhoyeh/go-labelstudio/testdata"
 	"github.com/stretchr/testify/assert"
 )
@@ -30,16 +29,9 @@ func TestLogin(t *testing.T) {
 	c, err := lstestutil.NewTestClient()
 	assert.NoError(t, err)
 
-	assert.NoError(
-		t,
-		NewLoginService(c).DefaultLogin(context.Background()),
-	)
-
-	u, err := url.Parse(c.HostURL())
+	sessionResp, err := NewLoginService(c).DefaultLogin(context.Background())
 	assert.NoError(t, err)
-	for _, cookie := range c.Jar().Cookies(u) {
-		fmt.Printf("  %s: %s\n", cookie.Name, cookie.Value)
-	}
+	assert.True(t, len(sessionResp.SessionID) > 0)
 }
 
 func TestSignup(t *testing.T) {
@@ -48,18 +40,24 @@ func TestSignup(t *testing.T) {
 	c1, err := lstestutil.NewTestClient()
 	assert.NoError(t, err)
 
-	loginService1 := NewLoginService(c1)
-	assert.NoError(t, loginService1.SignUp(ctx, "foo@example.com", "barbarbar", ""))
+	_, err = NewLoginService(c1).DefaultLogin(ctx)
+	assert.NoError(t, err)
+
+	inviteService := invite.NewInviteService(c1)
+	token, err := inviteService.GetInvitationToken(ctx)
+	assert.NoError(t, err)
 
 	c2, err := lstestutil.NewTestClient()
 	assert.NoError(t, err)
 	loginService2 := NewLoginService(c2)
-	assert.NoError(t, loginService2.LogMeIn(ctx, "foo@example.com", "barbarbar", ""))
-
-	u, err := url.Parse(c2.HostURL())
+	signupResponse, err := loginService2.SignUp(ctx, "foo@example.com", "barbarbar", token)
 	assert.NoError(t, err)
-	for _, cookie := range c2.Jar().Cookies(u) {
-		fmt.Printf("  %s: %s\n", cookie.Name, cookie.Value)
-	}
+	assert.True(t, len(signupResponse.SessionID) > 0)
 
+	c3, err := lstestutil.NewTestClient()
+	assert.NoError(t, err)
+	loginService3 := NewLoginService(c3)
+	loginResponse, err := loginService3.LogMeIn(ctx, "foo@example.com", "barbarbar")
+	assert.NoError(t, err)
+	assert.True(t, len(loginResponse.SessionID) > 0)
 }
