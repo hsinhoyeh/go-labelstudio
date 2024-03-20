@@ -26,17 +26,17 @@ type LoginService struct {
 
 // SignUp allows a new user to be registered into labelstudio
 // invitedToken is required when the public registered is diabled when LABEL_STUDIO_DISABLE_SIGNUP_WITHOUT_LINK is turned on.
-func (l *LoginService) SignUp(ctx context.Context, email, password string, invitedToken string) error {
+func (l *LoginService) SignUp(ctx context.Context, email, password string, invitedToken string) (*SessionResponse, error) {
 	signupUrl, err := lshttp.JoinURL(l.client.HostURL(), "/user/signup")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(invitedToken) > 0 {
 		signupUrl = fmt.Sprintf("%s/?token=%s", signupUrl, invitedToken)
 	}
 	csrfToken, err := retrieveCSRFToken(ctx, l.client, signupUrl)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	form := url.Values{}
@@ -46,33 +46,49 @@ func (l *LoginService) SignUp(ctx context.Context, email, password string, invit
 	form.Add("allow_newsletters", "false")
 	req, err := http.NewRequestWithContext(ctx, "POST", signupUrl, strings.NewReader(form.Encode()))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Referer", signupUrl)
 	_, err = l.client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return l.parseSessionResponse(signupUrl)
 }
 
-func (l *LoginService) DefaultLogin(ctx context.Context) error {
+func (l *LoginService) parseSessionResponse(siteUrl string) (*SessionResponse, error) {
+	u, _ := url.Parse(siteUrl)
+	for _, cookie := range l.client.Jar().Cookies(u) {
+		if cookie.Name == "sessionid" {
+			return &SessionResponse{
+				SessionID: cookie.Value,
+			}, nil
+		}
+	}
+	return nil, errors.New("sessionid not found")
+}
+
+type SessionResponse struct {
+	SessionID string `json:"sessionid"`
+}
+
+func (l *LoginService) DefaultLogin(ctx context.Context) (*SessionResponse, error) {
 	account := os.Getenv("LABEL_STUDIO_USERNAME")
 	password := os.Getenv("LABEL_STUDIO_PASSWORD")
 
 	return l.LogMeIn(ctx, account, password)
 }
 
-func (l *LoginService) LogMeIn(ctx context.Context, account string, password string) error {
+func (l *LoginService) LogMeIn(ctx context.Context, account string, password string) (*SessionResponse, error) {
 
 	loginUrl, err := lshttp.JoinURL(l.client.HostURL(), "/user/login")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	csrfToken, err := retrieveCSRFToken(ctx, l.client, loginUrl)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	form := url.Values{}
@@ -81,15 +97,15 @@ func (l *LoginService) LogMeIn(ctx context.Context, account string, password str
 	form.Add("password", password)
 	req, err := http.NewRequestWithContext(ctx, "POST", loginUrl, strings.NewReader(form.Encode()))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Referer", loginUrl)
 	_, err = l.client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return l.parseSessionResponse(loginUrl)
 }
 
 // retrieveCSRFToken issue a $GET requests with xxx/user/login to get started the whole conversation
