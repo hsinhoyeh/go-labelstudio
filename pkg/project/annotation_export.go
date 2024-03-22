@@ -2,6 +2,7 @@ package project
 
 import (
 	"encoding/json"
+	"errors"
 	"time"
 )
 
@@ -28,7 +29,7 @@ type EachFunc func(a AnnotatioExportImageClassification) error
 func (b BatchAnnotatioExportImageClassification) ForEach(do EachFunc) error {
 	bSlice := []AnnotatioExportImageClassification(b)
 	if len(bSlice) == 0 {
-		return
+		return errors.New("empty slice")
 	}
 	for _, v := range bSlice {
 		if err := do(v); err != nil {
