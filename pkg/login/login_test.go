@@ -53,7 +53,6 @@ func TestSignup(t *testing.T) {
 	inviteService := invite.NewInviteService(c1)
 	token, err := inviteService.GetInvitationToken(ctx)
 	assert.NoError(t, err)
-	fmt.Printf("token:%s\n", token)
 
 	c2, err := lstestutil.NewTestClient()
 	assert.NoError(t, err)
