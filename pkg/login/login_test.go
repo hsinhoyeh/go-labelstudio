@@ -61,3 +61,44 @@ func TestSignup(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, len(loginResponse.SessionID) > 0)
 }
+
+func TestMakeSignupOrLoginUrl(t *testing.T) {
+	for _, testcase := range []struct {
+		hosturl     string
+		requesturi  string
+		nexturi     string
+		expectedUrl string
+	}{
+		{
+			hosturl:     "https://foo.bar.com/subpath",
+			requesturi:  "/user/login",
+			nexturi:     "projects",
+			expectedUrl: "https://foo.bar.com/subpath/user/login%3Fnext=/subpath/projects",
+		},
+		{
+			hosturl:     "https://foo.bar.com/subpath",
+			requesturi:  "/user/login",
+			nexturi:     "",
+			expectedUrl: "https://foo.bar.com/subpath/user/login%3Fnext=/subpath/projects",
+		},
+
+		{
+			hosturl:     "https://foo.bar.com",
+			requesturi:  "/user/login",
+			nexturi:     "projects",
+			expectedUrl: "https://foo.bar.com/user/login%3Fnext=projects",
+		},
+		{
+			hosturl:     "https://foo.bar.com",
+			requesturi:  "/user/login",
+			nexturi:     "",
+			expectedUrl: "https://foo.bar.com/user/login%3Fnext=/projects",
+		},
+	} {
+
+		p, err := makeLoginUrl(testcase.hosturl, testcase.requesturi, testcase.nexturi)
+		assert.NoError(t, err)
+		assert.EqualValues(t, testcase.expectedUrl, p)
+
+	}
+}

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -27,7 +28,7 @@ type LoginService struct {
 // SignUp allows a new user to be registered into labelstudio
 // invitedToken is required when the public registered is diabled when LABEL_STUDIO_DISABLE_SIGNUP_WITHOUT_LINK is turned on.
 func (l *LoginService) SignUp(ctx context.Context, email, password string, invitedToken string) (*SessionResponse, error) {
-	signupUrl, err := lshttp.JoinURL(l.client.HostURL(), "/user/signup")
+	signupUrl, err := makeLoginUrl(l.client.HostURL(), "/user/signup", "/projects")
 	if err != nil {
 		return nil, err
 	}
@@ -57,6 +58,14 @@ func (l *LoginService) SignUp(ctx context.Context, email, password string, invit
 	return l.parseSessionResponse(signupUrl)
 }
 
+func makeLoginUrl(hosturl string, signupOrLogin string, next string) (string, error) {
+	if next == "" {
+		next = "/projects"
+	}
+	u, _ := url.Parse(hosturl)
+	return lshttp.JoinURL(hosturl, fmt.Sprintf("%s?next=%s", signupOrLogin, filepath.Join(u.Path, next)))
+}
+
 func (l *LoginService) parseSessionResponse(siteUrl string) (*SessionResponse, error) {
 	u, _ := url.Parse(siteUrl)
 	for _, cookie := range l.client.Jar().Cookies(u) {
@@ -81,8 +90,7 @@ func (l *LoginService) DefaultLogin(ctx context.Context) (*SessionResponse, erro
 }
 
 func (l *LoginService) LogMeIn(ctx context.Context, account string, password string) (*SessionResponse, error) {
-
-	loginUrl, err := lshttp.JoinURL(l.client.HostURL(), "/user/login")
+	loginUrl, err := makeLoginUrl(l.client.HostURL(), "/user/login", "/projects")
 	if err != nil {
 		return nil, err
 	}
