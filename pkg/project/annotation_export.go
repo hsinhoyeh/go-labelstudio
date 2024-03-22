@@ -23,16 +23,19 @@ func (b BatchAnnotatioExportImageClassification) Len() int {
 	return len([]AnnotatioExportImageClassification(b))
 }
 
-type EachFunc func(a AnnotatioExportImageClassification)
+type EachFunc func(a AnnotatioExportImageClassification) error
 
-func (b BatchAnnotatioExportImageClassification) ForEach(do EachFunc) {
+func (b BatchAnnotatioExportImageClassification) ForEach(do EachFunc) error {
 	bSlice := []AnnotatioExportImageClassification(b)
 	if len(bSlice) == 0 {
 		return
 	}
 	for _, v := range bSlice {
-		do(v)
+		if err := do(v); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 type AnnotatioExportImageClassification struct {
