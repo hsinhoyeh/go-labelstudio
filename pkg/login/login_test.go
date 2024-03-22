@@ -2,7 +2,9 @@ package login
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	lsgoquery "github.com/hsinhoyeh/go-labelstudio/pkg/goquery"
 	lstestutil "github.com/hsinhoyeh/go-labelstudio/pkg/http/testutil"
@@ -35,6 +37,11 @@ func TestLogin(t *testing.T) {
 }
 
 func TestSignup(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping testing in short mode")
+		return
+	}
+
 	ctx := context.Background()
 
 	c1, err := lstestutil.NewTestClient()
@@ -50,14 +57,60 @@ func TestSignup(t *testing.T) {
 	c2, err := lstestutil.NewTestClient()
 	assert.NoError(t, err)
 	loginService2 := NewLoginService(c2)
-	signupResponse, err := loginService2.SignUp(ctx, "foo@example.com", "barbarbar", token)
+	newRegisterUser := makeUserEmail()
+	signupResponse, err := loginService2.SignUp(ctx, newRegisterUser, "barbarbar", token)
 	assert.NoError(t, err)
 	assert.True(t, len(signupResponse.SessionID) > 0)
 
 	c3, err := lstestutil.NewTestClient()
 	assert.NoError(t, err)
 	loginService3 := NewLoginService(c3)
-	loginResponse, err := loginService3.LogMeIn(ctx, "foo@example.com", "barbarbar")
+	loginResponse, err := loginService3.LogMeIn(ctx, newRegisterUser, "barbarbar")
 	assert.NoError(t, err)
 	assert.True(t, len(loginResponse.SessionID) > 0)
+}
+
+func makeUserEmail() string {
+	return fmt.Sprintf("%d@example.com", time.Now().Nanosecond())
+}
+
+func TestMakeSignupOrLoginUrl(t *testing.T) {
+	for _, testcase := range []struct {
+		hosturl     string
+		requesturi  string
+		nexturi     string
+		expectedUrl string
+	}{
+		{
+			hosturl:     "https://foo.bar.com/subpath",
+			requesturi:  "/user/login",
+			nexturi:     "projects",
+			expectedUrl: "https://foo.bar.com/subpath/user/login?next=/subpath/projects",
+		},
+		{
+			hosturl:     "https://foo.bar.com/subpath",
+			requesturi:  "/user/login",
+			nexturi:     "",
+			expectedUrl: "https://foo.bar.com/subpath/user/login?next=/subpath/projects",
+		},
+
+		{
+			hosturl:     "https://foo.bar.com",
+			requesturi:  "/user/login",
+			nexturi:     "projects",
+			expectedUrl: "https://foo.bar.com/user/login?next=projects",
+		},
+		{
+			hosturl:     "https://foo.bar.com",
+			requesturi:  "/user/login",
+			nexturi:     "",
+			expectedUrl: "https://foo.bar.com/user/login?next=/projects",
+		},
+	} {
+
+		p, err := makeLoginUrl(testcase.hosturl, testcase.requesturi, testcase.nexturi)
+		assert.NoError(t, err)
+		assert.EqualValues(t, testcase.expectedUrl, p)
+
+	}
 }
