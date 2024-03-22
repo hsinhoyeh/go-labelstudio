@@ -9,21 +9,29 @@ type annotationExport interface {
 	Unmarshal([]byte) error
 }
 
-type BatchAnnotatioExportImageClassification []annotatioExportImageClassification
+type BatchAnnotatioExportImageClassification []AnnotatioExportImageClassification
 
 func (b *BatchAnnotatioExportImageClassification) Unmarshal(blob []byte) error {
 	return json.Unmarshal(blob, b)
 }
 
-func (b BatchAnnotatioExportImageClassification) At(idx int) annotatioExportImageClassification {
-	return []annotatioExportImageClassification(b)[idx]
+func (b BatchAnnotatioExportImageClassification) At(idx int) AnnotatioExportImageClassification {
+	return []AnnotatioExportImageClassification(b)[idx]
 }
 
 func (b BatchAnnotatioExportImageClassification) Len() int {
-	return len([]annotatioExportImageClassification(b))
+	return len([]AnnotatioExportImageClassification(b))
 }
 
-type annotatioExportImageClassification struct {
+type EachFunc func(a AnnotatioExportImageClassification)
+
+func (b BatchAnnotatioExportImageClassification) ForEach(do EachFunc) {
+	for _, v := range []AnnotatioExportImageClassification(b) {
+		do(v)
+	}
+}
+
+type AnnotatioExportImageClassification struct {
 	ID          int `json:"id,omitempty"`
 	Annotations []struct {
 		ID          int        `json:"id,omitempty"`
