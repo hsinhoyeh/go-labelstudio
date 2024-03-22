@@ -33,7 +33,12 @@ func (l *LoginService) SignUp(ctx context.Context, email, password string, invit
 		return nil, err
 	}
 	if len(invitedToken) > 0 {
-		signupUrl = fmt.Sprintf("%s/?token=%s", signupUrl, invitedToken)
+		u, _ := url.Parse(signupUrl)
+		queries := u.Query()
+		queries.Set("token", invitedToken)
+		u.RawQuery = queries.Encode()
+
+		signupUrl = u.String()
 	}
 	csrfToken, err := retrieveCSRFToken(ctx, l.client, signupUrl)
 	if err != nil {
@@ -63,7 +68,12 @@ func makeLoginUrl(hosturl string, signupOrLogin string, next string) (string, er
 		next = "/projects"
 	}
 	u, _ := url.Parse(hosturl)
-	return lshttp.JoinURL(hosturl, fmt.Sprintf("%s?next=%s", signupOrLogin, filepath.Join(u.Path, next)))
+
+	s, err := lshttp.JoinURL(hosturl, fmt.Sprintf("%s?next=%s", signupOrLogin, filepath.Join(u.Path, next)))
+	if err != nil {
+		return "", err
+	}
+	return strings.Replace(s, "%3F", "?", -1), nil
 }
 
 func (l *LoginService) parseSessionResponse(siteUrl string) (*SessionResponse, error) {

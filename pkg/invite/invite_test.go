@@ -12,6 +12,11 @@ import (
 )
 
 func TestGetInvitationToken(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping testing in short mode")
+		return
+	}
+
 	c, err := lstestutil.NewTestClient()
 	assert.NoError(t, err)
 
