@@ -26,7 +26,11 @@ func (b BatchAnnotatioExportImageClassification) Len() int {
 type EachFunc func(a AnnotatioExportImageClassification)
 
 func (b BatchAnnotatioExportImageClassification) ForEach(do EachFunc) {
-	for _, v := range []AnnotatioExportImageClassification(b) {
+	bSlice := []AnnotatioExportImageClassification(b)
+	if len(bSlice) == 0 {
+		return
+	}
+	for _, v := range bSlice {
 		do(v)
 	}
 }
