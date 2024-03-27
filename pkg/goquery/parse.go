@@ -3,6 +3,7 @@ package goquery
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/PuerkitoBio/goquery"
@@ -17,6 +18,7 @@ func ParseHTML(ctx context.Context, httpClient *lshttp.Client, url string, p Par
 	if err != nil {
 		return "", false, err
 	}
+	fmt.Printf("loginFormInBytes:%s\n", string(loginFormInBytes))
 	return ParseRawHTML(loginFormInBytes, p)
 }
 
