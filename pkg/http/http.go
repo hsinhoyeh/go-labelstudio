@@ -1,24 +1,71 @@
 package http
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/http/cookiejar"
+	"os"
 
 	"golang.org/x/net/publicsuffix"
 
 	lsopenapi "github.com/hsinhoyeh/go-labelstudio/api/go-openapiv2"
 )
 
-func NewClient(hostURL string) (*Client, error) {
+type Options struct {
+	caCert string
+}
+
+type clientOption interface {
+	apply(*Options)
+}
+
+func WithCaCert(caCert string) clientOption {
+	return withCaCert{caCert}
+}
+
+type withCaCert struct {
+	caCert string
+}
+
+func (w withCaCert) apply(o *Options) {
+	o.caCert = w.caCert
+}
+
+func NewClient(hostURL string, opts ...clientOption) (*Client, error) {
+	o := &Options{}
+	for _, opt := range opts {
+		opt.apply(o)
+	}
+
+	var transport http.RoundTripper
+	if o.caCert != "" {
+		caCert, err := os.ReadFile(o.caCert)
+		if err != nil {
+			return nil, err
+		}
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			log.Fatalf("Failed to append CA certificate to the pool")
+		}
+		transport = &http.Transport{
+			TLSClientConfig: &tls.Config{
+				RootCAs: caCertPool,
+			},
+		}
+	}
+
 	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	if err != nil {
 		return nil, err
 	}
 	return &Client{
 		httpClient: &http.Client{
-			Jar: jar,
+			Transport: transport,
+			Jar:       jar,
 		},
 		hostURL: hostURL,
 	}, nil
