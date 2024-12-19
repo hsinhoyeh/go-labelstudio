@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	log "github.com/golang/glog"
 	lsgoquery "github.com/hsinhoyeh/go-labelstudio/pkg/goquery"
 	lshttp "github.com/hsinhoyeh/go-labelstudio/pkg/http"
 )
@@ -30,6 +31,7 @@ type LoginService struct {
 func (l *LoginService) SignUp(ctx context.Context, email, password string, invitedToken string) (*SessionResponse, error) {
 	signupUrl, err := makeLoginUrl(l.client.HostURL(), "/user/signup", "/projects")
 	if err != nil {
+		log.Error("ls: generate signup url failed, err:%+v\n", err)
 		return nil, err
 	}
 	if len(invitedToken) > 0 {
@@ -42,6 +44,7 @@ func (l *LoginService) SignUp(ctx context.Context, email, password string, invit
 	}
 	csrfToken, err := retrieveCSRFToken(ctx, l.client, signupUrl)
 	if err != nil {
+		log.Error("ls:retrieve CSRF token failed, err:%+v\n", err)
 		return nil, err
 	}
 
@@ -58,6 +61,7 @@ func (l *LoginService) SignUp(ctx context.Context, email, password string, invit
 	req.Header.Add("Referer", signupUrl)
 	_, err = l.client.Do(req)
 	if err != nil {
+		log.Error("ls: post signup failed, err:%+v\n", err)
 		return nil, err
 	}
 	return l.parseSessionResponse(signupUrl)
@@ -71,6 +75,7 @@ func makeLoginUrl(hosturl string, signupOrLogin string, next string) (string, er
 
 	s, err := lshttp.JoinURL(hosturl, fmt.Sprintf("%s?next=%s", signupOrLogin, filepath.Join(u.Path, next)))
 	if err != nil {
+		log.Error("ls: generate login url failed, url:%s, err:%+v\n", s, err)
 		return "", err
 	}
 	return strings.Replace(s, "%3F", "?", -1), nil
@@ -102,10 +107,12 @@ func (l *LoginService) DefaultLogin(ctx context.Context) (*SessionResponse, erro
 func (l *LoginService) LogMeIn(ctx context.Context, account string, password string) (*SessionResponse, error) {
 	loginUrl, err := makeLoginUrl(l.client.HostURL(), "/user/login", "/projects")
 	if err != nil {
+		log.Error("ls: generate logmein failed, url:%s, err:%+v\n", loginUrl, err)
 		return nil, err
 	}
 	csrfToken, err := retrieveCSRFToken(ctx, l.client, loginUrl)
 	if err != nil {
+		log.Error("ls: parse csrf token failed, err:%+v\n", err)
 		return nil, err
 	}
 
@@ -147,7 +154,9 @@ func (l *LoginService) LogMeIn(ctx context.Context, account string, password str
 //	  <p><button type="submit" aria-label="Log In" class="ls-button ls-button_look_primary">Log in</button></p>
 //	</form>
 func retrieveCSRFToken(ctx context.Context, client *lshttp.Client, url string) (string, error) {
+	log.Info("ls: retrieve csrf otken, url:%+s\n", url)
 	val, found, err := lsgoquery.ParseHTML(ctx, client, url, csrfParser)
+	log.Info("ls: csrf val:%+v, found:%+v, err:%+v\n", val, found, err)
 	if err != nil {
 		return "", err
 	}
