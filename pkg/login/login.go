@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	log "github.com/golang/glog"
 	lsgoquery "github.com/hsinhoyeh/go-labelstudio/pkg/goquery"
 	lshttp "github.com/hsinhoyeh/go-labelstudio/pkg/http"
 )
@@ -27,9 +28,10 @@ type LoginService struct {
 
 // SignUp allows a new user to be registered into labelstudio
 // invitedToken is required when the public registered is diabled when LABEL_STUDIO_DISABLE_SIGNUP_WITHOUT_LINK is turned on.
-func (l *LoginService) SignUp(ctx context.Context, email, password string, invitedToken string) (*SessionResponse, error) {
-	signupUrl, err := makeLoginUrl(l.client.HostURL(), "/user/signup", "/projects")
+func SignUp(ctx context.Context, client *lshttp.Client, email, password string, invitedToken string) (*SessionResponse, error) {
+	signupUrl, err := makeLoginUrl(client.HostURL(), "/user/signup", "/projects")
 	if err != nil {
+		log.Error("ls: generate signup url failed, err:%+v\n", err)
 		return nil, err
 	}
 	if len(invitedToken) > 0 {
@@ -40,8 +42,9 @@ func (l *LoginService) SignUp(ctx context.Context, email, password string, invit
 
 		signupUrl = u.String()
 	}
-	csrfToken, err := retrieveCSRFToken(ctx, l.client, signupUrl)
+	csrfToken, err := retrieveCSRFToken(ctx, client, signupUrl)
 	if err != nil {
+		log.Error("ls:retrieve CSRF token failed, err:%+v\n", err)
 		return nil, err
 	}
 
@@ -56,11 +59,12 @@ func (l *LoginService) SignUp(ctx context.Context, email, password string, invit
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Referer", signupUrl)
-	_, err = l.client.Do(req)
+	_, err = client.Do(req)
 	if err != nil {
+		log.Error("ls: post signup failed, err:%+v\n", err)
 		return nil, err
 	}
-	return l.parseSessionResponse(signupUrl)
+	return parseSessionResponse(client, signupUrl)
 }
 
 func makeLoginUrl(hosturl string, signupOrLogin string, next string) (string, error) {
@@ -71,14 +75,15 @@ func makeLoginUrl(hosturl string, signupOrLogin string, next string) (string, er
 
 	s, err := lshttp.JoinURL(hosturl, fmt.Sprintf("%s?next=%s", signupOrLogin, filepath.Join(u.Path, next)))
 	if err != nil {
+		log.Error("ls: generate login url failed, url:%s, err:%+v\n", s, err)
 		return "", err
 	}
 	return strings.Replace(s, "%3F", "?", -1), nil
 }
 
-func (l *LoginService) parseSessionResponse(siteUrl string) (*SessionResponse, error) {
+func parseSessionResponse(client *lshttp.Client, siteUrl string) (*SessionResponse, error) {
 	u, _ := url.Parse(siteUrl)
-	for _, cookie := range l.client.Jar().Cookies(u) {
+	for _, cookie := range client.Jar().Cookies(u) {
 		if cookie.Name == "sessionid" {
 			return &SessionResponse{
 				SessionID: cookie.Value,
@@ -96,16 +101,18 @@ func (l *LoginService) DefaultLogin(ctx context.Context) (*SessionResponse, erro
 	account := os.Getenv("LABEL_STUDIO_USERNAME")
 	password := os.Getenv("LABEL_STUDIO_PASSWORD")
 
-	return l.LogMeIn(ctx, account, password)
+	return LogMeIn(ctx, l.client, account, password)
 }
 
-func (l *LoginService) LogMeIn(ctx context.Context, account string, password string) (*SessionResponse, error) {
-	loginUrl, err := makeLoginUrl(l.client.HostURL(), "/user/login", "/projects")
+func LogMeIn(ctx context.Context, client *lshttp.Client, account string, password string) (*SessionResponse, error) {
+	loginUrl, err := makeLoginUrl(client.HostURL(), "/user/login", "/projects")
 	if err != nil {
+		log.Error("ls: generate logmein failed, url:%s, err:%+v\n", loginUrl, err)
 		return nil, err
 	}
-	csrfToken, err := retrieveCSRFToken(ctx, l.client, loginUrl)
+	csrfToken, err := retrieveCSRFToken(ctx, client, loginUrl)
 	if err != nil {
+		log.Error("ls: parse csrf token failed, err:%+v\n", err)
 		return nil, err
 	}
 
@@ -119,11 +126,11 @@ func (l *LoginService) LogMeIn(ctx context.Context, account string, password str
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Referer", loginUrl)
-	_, err = l.client.Do(req)
+	_, err = client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	return l.parseSessionResponse(loginUrl)
+	return parseSessionResponse(client, loginUrl)
 }
 
 // retrieveCSRFToken issue a $GET requests with xxx/user/login to get started the whole conversation
@@ -147,7 +154,9 @@ func (l *LoginService) LogMeIn(ctx context.Context, account string, password str
 //	  <p><button type="submit" aria-label="Log In" class="ls-button ls-button_look_primary">Log in</button></p>
 //	</form>
 func retrieveCSRFToken(ctx context.Context, client *lshttp.Client, url string) (string, error) {
+	log.Info("ls: retrieve csrf otken, url:%+s\n", url)
 	val, found, err := lsgoquery.ParseHTML(ctx, client, url, csrfParser)
+	log.Info("ls: csrf val:%+v, found:%+v, err:%+v\n", val, found, err)
 	if err != nil {
 		return "", err
 	}

@@ -18,6 +18,7 @@ import (
 type Options struct {
 	caCert           string
 	insureSkipVerify bool
+	enableLog        bool
 }
 
 type clientOption interface {
@@ -46,6 +47,18 @@ type withSkipVerify struct {
 
 func (w withSkipVerify) apply(o *Options) {
 	o.insureSkipVerify = w.insureSkipVerify
+}
+
+func WithLog(enableLog bool) clientOption {
+	return withLog{enableLog}
+}
+
+type withLog struct {
+	enableLog bool
+}
+
+func (w withLog) apply(o *Options) {
+	o.enableLog = w.enableLog
 }
 
 func NewClient(hostURL string, opts ...clientOption) (*Client, error) {
@@ -78,6 +91,10 @@ func newClientWithOptions(hostURL string, o *Options) (*Client, error) {
 				InsecureSkipVerify: true,
 			},
 		}
+	}
+
+	if o.enableLog {
+		transport = &LoggingTransport{Transport: transport}
 	}
 
 	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})

@@ -14,13 +14,25 @@ import (
 )
 
 func TestParseCSRFToken(t *testing.T) {
-	userLoginBytes, err := testdata.HtmlFs.ReadFile("html/userlogin.html")
-	assert.NoError(t, err)
+	{
+		userLoginBytes, err := testdata.HtmlFs.ReadFile("html/userlogin.html")
+		assert.NoError(t, err)
 
-	val, found, err := lsgoquery.ParseRawHTML(userLoginBytes, csrfParser)
-	assert.NoError(t, err)
-	assert.EqualValues(t, "ynwRhcis7Cti9Bzcrpag0eJssA8Zz4RSqRp2sGzbei6CYONHfQ0vY60VdOJw3Wd0", val)
-	assert.True(t, found)
+		val, found, err := lsgoquery.ParseRawHTML(userLoginBytes, csrfParser)
+		assert.NoError(t, err)
+		assert.EqualValues(t, "ynwRhcis7Cti9Bzcrpag0eJssA8Zz4RSqRp2sGzbei6CYONHfQ0vY60VdOJw3Wd0", val)
+		assert.True(t, found)
+	}
+	{
+		userLoginBytes, err := testdata.HtmlFs.ReadFile("html/usersignup.html")
+		assert.NoError(t, err)
+
+		val, found, err := lsgoquery.ParseRawHTML(userLoginBytes, csrfParser)
+		assert.NoError(t, err)
+		assert.EqualValues(t, "sB39csJaMgbyf31JMpnduFm7g6ckzKWz1qkF2WnZqxuuyCaiW3m9bCmjdGxwdVch", val)
+		assert.True(t, found)
+	}
+
 }
 
 func TestLogin(t *testing.T) {
@@ -57,15 +69,19 @@ func TestSignup(t *testing.T) {
 	c2, err := lstestutil.NewTestClient()
 	assert.NoError(t, err)
 	loginService2 := NewLoginService(c2)
+	cc, err := loginService2.client.Clone()
+	assert.NoError(t, err)
 	newRegisterUser := makeUserEmail()
-	signupResponse, err := loginService2.SignUp(ctx, newRegisterUser, "barbarbar", token)
+	signupResponse, err := SignUp(ctx, cc, newRegisterUser, "barbarbar", token)
 	assert.NoError(t, err)
 	assert.True(t, len(signupResponse.SessionID) > 0)
 
 	c3, err := lstestutil.NewTestClient()
 	assert.NoError(t, err)
 	loginService3 := NewLoginService(c3)
-	loginResponse, err := loginService3.LogMeIn(ctx, newRegisterUser, "barbarbar")
+	cc, err = loginService3.client.Clone()
+	assert.NoError(t, err)
+	loginResponse, err := LogMeIn(ctx, cc, newRegisterUser, "barbarbar")
 	assert.NoError(t, err)
 	assert.True(t, len(loginResponse.SessionID) > 0)
 }
