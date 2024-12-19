@@ -16,7 +16,8 @@ import (
 )
 
 type Options struct {
-	caCert string
+	caCert           string
+	insureSkipVerify bool
 }
 
 type clientOption interface {
@@ -33,6 +34,18 @@ type withCaCert struct {
 
 func (w withCaCert) apply(o *Options) {
 	o.caCert = w.caCert
+}
+
+func WithSkipVerify(b bool) clientOption {
+	return withSkipVerify{b}
+}
+
+type withSkipVerify struct {
+	insureSkipVerify bool
+}
+
+func (w withSkipVerify) apply(o *Options) {
+	o.insureSkipVerify = w.insureSkipVerify
 }
 
 func NewClient(hostURL string, opts ...clientOption) (*Client, error) {
@@ -54,6 +67,12 @@ func NewClient(hostURL string, opts ...clientOption) (*Client, error) {
 		transport = &http.Transport{
 			TLSClientConfig: &tls.Config{
 				RootCAs: caCertPool,
+			},
+		}
+	} else if o.insureSkipVerify {
+		transport = &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
 			},
 		}
 	}
