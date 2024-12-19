@@ -41,7 +41,6 @@ func logRequest(req *http.Request) {
 // logResponse logs details of the HTTP response
 func logResponse(resp *http.Response, startTime time.Time) {
 	duration := time.Since(startTime)
-	bodyCopy := copyResponseBody(resp)
 	log.Printf("Response: %s %s\nStatus: %s\nHeaders: %v\nDuration: %v\n",
 		resp.Request.Method, resp.Request.URL.String(), resp.Status, resp.Header, duration)
 }
