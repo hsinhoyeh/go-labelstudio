@@ -34,17 +34,16 @@ func (t *LoggingTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 
 // logRequest logs details of the HTTP request
 func logRequest(req *http.Request) {
-	bodyCopy := copyRequestBody(req)
-	log.Printf("Request: %s %s\nHeaders: %v\nBody: %s\n",
-		req.Method, req.URL.String(), req.Header, bodyCopy)
+	log.Printf("Request: %s %s\nHeaders: %v\n",
+		req.Method, req.URL.String(), req.Header)
 }
 
 // logResponse logs details of the HTTP response
 func logResponse(resp *http.Response, startTime time.Time) {
 	duration := time.Since(startTime)
 	bodyCopy := copyResponseBody(resp)
-	log.Printf("Response: %s %s\nStatus: %s\nHeaders: %v\nBody: %s\nDuration: %v\n",
-		resp.Request.Method, resp.Request.URL.String(), resp.Status, resp.Header, bodyCopy, duration)
+	log.Printf("Response: %s %s\nStatus: %s\nHeaders: %v\nDuration: %v\n",
+		resp.Request.Method, resp.Request.URL.String(), resp.Status, resp.Header, duration)
 }
 
 // copyRequestBody copies the request body for logging
