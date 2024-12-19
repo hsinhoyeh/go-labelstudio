@@ -53,7 +53,10 @@ func NewClient(hostURL string, opts ...clientOption) (*Client, error) {
 	for _, opt := range opts {
 		opt.apply(o)
 	}
+	return newClientWithOptions(hostURL, o)
+}
 
+func newClientWithOptions(hostURL string, o *Options) (*Client, error) {
 	var transport http.RoundTripper
 	if o.caCert != "" {
 		caCert, err := os.ReadFile(o.caCert)
@@ -87,12 +90,18 @@ func NewClient(hostURL string, opts ...clientOption) (*Client, error) {
 			Jar:       jar,
 		},
 		hostURL: hostURL,
+		options: o,
 	}, nil
 }
 
 type Client struct {
 	httpClient *http.Client
 	hostURL    string
+	options    *Options
+}
+
+func (c *Client) Clone() (*Client, error) {
+	return newClientWithOptions(c.hostURL, c.options)
 }
 
 func (c *Client) HostURL() string {
