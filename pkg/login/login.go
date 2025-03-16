@@ -26,6 +26,12 @@ type LoginService struct {
 	client *lshttp.Client
 }
 
+// SessionResponse contains the session information returned after authentication
+type SessionResponse struct {
+	SessionID string `json:"sessionid"`
+	CSRFToken string `json:"csrftoken,omitempty"`
+}
+
 // SignUp allows a new user to be registered into labelstudio
 // invitedToken is required when the public registered is diabled when LABEL_STUDIO_DISABLE_SIGNUP_WITHOUT_LINK is turned on.
 func SignUp(ctx context.Context, client *lshttp.Client, email, password string, invitedToken string) (*SessionResponse, error) {
@@ -48,6 +54,10 @@ func SignUp(ctx context.Context, client *lshttp.Client, email, password string, 
 		return nil, err
 	}
 
+	if csrfToken == "" {
+		return nil, errors.New("CSRF token is required for signup but none was found")
+	}
+
 	form := url.Values{}
 	form.Add("csrfmiddlewaretoken", csrfToken)
 	form.Add("email", email)
@@ -64,7 +74,26 @@ func SignUp(ctx context.Context, client *lshttp.Client, email, password string, 
 		log.Error("ls: post signup failed, err:%+v\n", err)
 		return nil, err
 	}
-	return parseSessionResponse(client, signupUrl)
+
+	// For debugging
+	log.Info("ls: signup completed")
+
+	// Get session response and include CSRF token if available
+	sessionResp, err := parseSessionResponse(client, signupUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check for CSRF token in cookies after signup
+	parsedURL, _ := url.Parse(signupUrl)
+	for _, cookie := range client.Jar().Cookies(parsedURL) {
+		if cookie.Name == "csrftoken" {
+			sessionResp.CSRFToken = cookie.Value
+			break
+		}
+	}
+
+	return sessionResp, nil
 }
 
 func makeLoginUrl(hosturl string, signupOrLogin string, next string) (string, error) {
@@ -83,18 +112,27 @@ func makeLoginUrl(hosturl string, signupOrLogin string, next string) (string, er
 
 func parseSessionResponse(client *lshttp.Client, siteUrl string) (*SessionResponse, error) {
 	u, _ := url.Parse(siteUrl)
+	sessionResp := &SessionResponse{}
+
 	for _, cookie := range client.Jar().Cookies(u) {
 		if cookie.Name == "sessionid" {
-			return &SessionResponse{
-				SessionID: cookie.Value,
-			}, nil
+			sessionResp.SessionID = cookie.Value
+		}
+		if cookie.Name == "csrftoken" {
+			sessionResp.CSRFToken = cookie.Value
 		}
 	}
-	return nil, errors.New("sessionid not found")
-}
 
-type SessionResponse struct {
-	SessionID string `json:"sessionid"`
+	if sessionResp.SessionID == "" {
+		return nil, errors.New("sessionid not found")
+	}
+
+	// Check if the sessionid format indicates a logged-in user
+	// (Session IDs for logged-in users contain dots)
+	isLoggedIn := strings.Contains(sessionResp.SessionID, ".")
+	log.Info("ls: session detected, logged in status: %v\n", isLoggedIn)
+
+	return sessionResp, nil
 }
 
 func (l *LoginService) DefaultLogin(ctx context.Context) (*SessionResponse, error) {
@@ -104,18 +142,36 @@ func (l *LoginService) DefaultLogin(ctx context.Context) (*SessionResponse, erro
 	return LogMeIn(ctx, l.client, account, password)
 }
 
+// LogMeIn handles the login process, including managing CSRF tokens
 func LogMeIn(ctx context.Context, client *lshttp.Client, account string, password string) (*SessionResponse, error) {
 	loginUrl, err := makeLoginUrl(client.HostURL(), "/user/login", "/projects")
 	if err != nil {
 		log.Error("ls: generate logmein failed, url:%s, err:%+v\n", loginUrl, err)
 		return nil, err
 	}
+
+	// Check if we're already logged in first
+	sessionResp, err := parseSessionResponse(client, loginUrl)
+	if err == nil && sessionResp.SessionID != "" && strings.Contains(sessionResp.SessionID, ".") {
+		log.Info("ls: user already has valid session (contains dot), skipping login\n")
+		return sessionResp, nil
+	}
+
+	// Try to retrieve CSRF token for login
 	csrfToken, err := retrieveCSRFToken(ctx, client, loginUrl)
 	if err != nil {
 		log.Error("ls: parse csrf token failed, err:%+v\n", err)
 		return nil, err
 	}
 
+	// If no CSRF token found but no error, something is wrong
+	// Label Studio should always provide a CSRF token for login page
+	if csrfToken == "" {
+		log.Error("ls: no csrf token found in login page, cannot proceed with login\n")
+		return nil, errors.New("missing CSRF token for login")
+	}
+
+	// Proceed with login using CSRF token
 	form := url.Values{}
 	form.Add("csrfmiddlewaretoken", csrfToken)
 	form.Add("email", account)
@@ -130,38 +186,42 @@ func LogMeIn(ctx context.Context, client *lshttp.Client, account string, passwor
 	if err != nil {
 		return nil, err
 	}
+
+	// For debugging
+	log.Info("ls: login completed")
+
+	// Parse session and include CSRF token if available
 	return parseSessionResponse(client, loginUrl)
 }
 
-// retrieveCSRFToken issue a $GET requests with xxx/user/login to get started the whole conversation
-// the server side would issue a CSRF token in cookies
-// and a csrfmiddlewaretoken inside the form, where this function would parse and return it.
-//
-// example:
-// Set-Cookie:
-// csrftoken=58r3SWadB9FQ17Y9u8ytuLhkTyR1PuT2IEdZdJtUDhrOrfpwWf6aucIUqEWjCVGc; expires=Fri, 14 Mar 2025 06:22:47 GMT; Max-Age=31449600; Path=/; SameSite=Lax
-// Set-Cookie:
-// sessionid=eyJ1aWQiOiJiZDMwNmMwMC1lY2FjLTRhNDMtYWI2YS03NGY2YTQ5YTQ1ODEiLCJvcmdhbml6YXRpb25fcGsiOjF9:1rl0xr:B2Md-s6kvMBe69k7LzIENQB211Dug--Q0v_bRYyoYxA; expires=Fri, 29 Mar 2024 06:22:47 GMT; HttpOnly; Max-
-// <form id="login-form" action="/labeling/user/login/?next=/labeling/projects/" method="post">
-//
-//	  <input type="hidden" name="csrfmiddlewaretoken" value="ynwRhcis7Cti9Bzcrpag0eJssA8Zz4RSqRp2sGzbei6CYONHfQ0vY60VdOJw3Wd0">
-//	  <p><input type="text" class="ls-input" name="email" id="email" placeholder="Email" value=""></p>
-//	  <p><input type="password" class="ls-input" name="password" id="password" placeholder="Password"></p>
-//	  <p>
-//	    <input type="checkbox" id="persist_session" name="persist_session" class="ls-checkbox" checked="checked" style="width: auto;" />
-//	    <label for="persist_session">Keep me logged in this browser</label>
-//	  </p>
-//	  <p><button type="submit" aria-label="Log In" class="ls-button ls-button_look_primary">Log in</button></p>
-//	</form>
-func retrieveCSRFToken(ctx context.Context, client *lshttp.Client, url string) (string, error) {
-	log.Info("ls: retrieve csrf otken, url:%+s\n", url)
-	val, found, err := lsgoquery.ParseHTML(ctx, client, url, csrfParser)
+// retrieveCSRFToken tries to get a CSRF token from the page or from cookies
+// Returns the token if found, or an empty string and no error if user is already logged in
+func retrieveCSRFToken(ctx context.Context, client *lshttp.Client, loginUrl string) (string, error) {
+	log.Info("ls: retrieve csrf token, url:%+s\n", loginUrl)
+
+	// First check if we already have a CSRF token in cookies
+	parsedURL, err := url.Parse(loginUrl)
+	if err != nil {
+		return "", err
+	}
+
+	for _, cookie := range client.Jar().Cookies(parsedURL) {
+		if cookie.Name == "csrftoken" {
+			log.Info("ls: found csrf token in cookies: %s\n", cookie.Value)
+			return cookie.Value, nil
+		}
+	}
+
+	// If not in cookies, try to parse it from the HTML response
+	val, found, err := lsgoquery.ParseHTML(ctx, client, loginUrl, csrfParser)
 	log.Info("ls: csrf val:%+v, found:%+v, err:%+v\n", val, found, err)
 	if err != nil {
 		return "", err
 	}
 	if !found {
-		return "", errors.New("found nothing with parser")
+		// User might be already logged in - this is not necessarily an error
+		log.Info("ls: csrf token not found in response, user might be already logged in\n")
+		return "", nil
 	}
 	return val, nil
 }
