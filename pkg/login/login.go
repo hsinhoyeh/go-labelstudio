@@ -75,9 +75,6 @@ func SignUp(ctx context.Context, client *lshttp.Client, email, password string, 
 		return nil, err
 	}
 
-	// For debugging
-	log.Info("ls: signup completed")
-
 	// Get session response and include CSRF token if available
 	sessionResp, err := parseSessionResponse(client, signupUrl)
 	if err != nil {
@@ -153,7 +150,6 @@ func LogMeIn(ctx context.Context, client *lshttp.Client, account string, passwor
 	// Check if we're already logged in first
 	sessionResp, err := parseSessionResponse(client, loginUrl)
 	if err == nil && sessionResp.SessionID != "" && strings.Contains(sessionResp.SessionID, ".") {
-		log.Info("ls: user already has valid session (contains dot), skipping login\n")
 		return sessionResp, nil
 	}
 
@@ -187,9 +183,6 @@ func LogMeIn(ctx context.Context, client *lshttp.Client, account string, passwor
 		return nil, err
 	}
 
-	// For debugging
-	log.Info("ls: login completed")
-
 	// Parse session and include CSRF token if available
 	return parseSessionResponse(client, loginUrl)
 }
@@ -197,7 +190,6 @@ func LogMeIn(ctx context.Context, client *lshttp.Client, account string, passwor
 // retrieveCSRFToken tries to get a CSRF token from the page or from cookies
 // Returns the token if found, or an empty string and no error if user is already logged in
 func retrieveCSRFToken(ctx context.Context, client *lshttp.Client, loginUrl string) (string, error) {
-	log.Info("ls: retrieve csrf token, url:%+s\n", loginUrl)
 
 	// First check if we already have a CSRF token in cookies
 	parsedURL, err := url.Parse(loginUrl)
@@ -207,14 +199,12 @@ func retrieveCSRFToken(ctx context.Context, client *lshttp.Client, loginUrl stri
 
 	for _, cookie := range client.Jar().Cookies(parsedURL) {
 		if cookie.Name == "csrftoken" {
-			log.Info("ls: found csrf token in cookies: %s\n", cookie.Value)
 			return cookie.Value, nil
 		}
 	}
 
 	// If not in cookies, try to parse it from the HTML response
 	val, found, err := lsgoquery.ParseHTML(ctx, client, loginUrl, csrfParser)
-	log.Info("ls: csrf val:%+v, found:%+v, err:%+v\n", val, found, err)
 	if err != nil {
 		return "", err
 	}
