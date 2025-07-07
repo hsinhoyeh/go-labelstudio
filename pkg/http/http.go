@@ -93,6 +93,9 @@ func newClientWithOptions(hostURL string, o *Options) (*Client, error) {
 		}
 	}
 
+	// Always wrap with LabelStudioTransport to fix Authorization headers
+	transport = &LabelStudioTransport{Transport: transport}
+
 	if o.enableLog {
 		transport = &LoggingTransport{Transport: transport}
 	}

@@ -35,11 +35,22 @@ type SessionResponse struct {
 // SignUp allows a new user to be registered into labelstudio
 // invitedToken is required when the public registered is diabled when LABEL_STUDIO_DISABLE_SIGNUP_WITHOUT_LINK is turned on.
 func SignUp(ctx context.Context, client *lshttp.Client, email, password string, invitedToken string) (*SessionResponse, error) {
+	debugEnabled := os.Getenv("LABEL_STUDIO_DEBUG") != ""
+	
+	if debugEnabled {
+		log.Info("[DEBUG] SignUp called with email: %s, invitedToken: %s", email, invitedToken)
+	}
+	
 	signupUrl, err := makeLoginUrl(client.HostURL(), "/user/signup", "/projects")
 	if err != nil {
 		log.Error("ls: generate signup url failed, err:%+v\n", err)
 		return nil, err
 	}
+	
+	if debugEnabled {
+		log.Info("[DEBUG] Base signup URL: %s", signupUrl)
+	}
+	
 	if len(invitedToken) > 0 {
 		u, _ := url.Parse(signupUrl)
 		queries := u.Query()
@@ -47,14 +58,25 @@ func SignUp(ctx context.Context, client *lshttp.Client, email, password string, 
 		u.RawQuery = queries.Encode()
 
 		signupUrl = u.String()
+		
+		if debugEnabled {
+			log.Info("[DEBUG] Signup URL with invitation token: %s", signupUrl)
+		}
 	}
 	csrfToken, err := retrieveCSRFToken(ctx, client, signupUrl)
 	if err != nil {
 		log.Error("ls:retrieve CSRF token failed, err:%+v\n", err)
 		return nil, err
 	}
+	
+	if debugEnabled {
+		log.Info("[DEBUG] Retrieved CSRF token: %s", csrfToken)
+	}
 
 	if csrfToken == "" {
+		if debugEnabled {
+			log.Info("[DEBUG] No CSRF token found - this could indicate signup page issues or user already logged in")
+		}
 		return nil, errors.New("CSRF token is required for signup but none was found")
 	}
 
